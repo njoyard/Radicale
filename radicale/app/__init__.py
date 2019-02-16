@@ -242,7 +242,8 @@ class Application(
         elif user:
             logger.info("Successful login: %r -> %r", login, user)
         elif login:
-            logger.info("Failed login attempt: %r", login)
+            logger.info("Failed login attempt: %r (from %r)", login,
+                        remote_host)
             # Random delay to avoid timing oracles and bruteforce attacks
             delay = self.configuration.getfloat("auth", "delay")
             if delay > 0:
@@ -252,7 +253,8 @@ class Application(
 
         if user and not pathutils.is_safe_path_component(user):
             # Prevent usernames like "user/calendar.ics"
-            logger.info("Refused unsafe username: %r", user)
+            logger.info("Refused unsafe username: %r (from %r)", user,
+                        remote_host)
             user = ""
 
         # Create principal collection
@@ -273,7 +275,8 @@ class Application(
                             user = ""
             else:
                 logger.warning("Access to principal path %r denied by "
-                               "rights backend", principal_path)
+                               "rights backend (from %r)", principal_path,
+                               remote_host)
 
         if self.configuration.getboolean("internal", "internal_server"):
             # Verify content length
@@ -289,8 +292,9 @@ class Application(
             status, headers, answer = function(
                 environ, base_prefix, path, user)
             if (status, headers, answer) == httputils.NOT_ALLOWED:
-                logger.info("Access to %r denied for %s", path,
-                            repr(user) if user else "anonymous user")
+                logger.info("Access to %r denied for %s (from %r)", path,
+                            repr(user) if user else "anonymous user",
+                            remote_host)
         else:
             status, headers, answer = httputils.NOT_ALLOWED
 
